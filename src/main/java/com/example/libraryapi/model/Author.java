@@ -68,7 +68,7 @@ public class Author {
      *
      * <p>The format must match valid ISNI with 16 digits, spaces between them is accepted.
      *
-     * <p>xample: <i>0000 0000 0000 0000</i>
+     * <p>Example: <i>0000 0000 0000 0000</i>
      *
      * <p>If null is passed in then the ISNI is removed.
      *
