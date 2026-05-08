@@ -28,7 +28,7 @@ public class Author {
     private String isni;
 
     /** Default constructor for JPA. Should not be used directly */
-    public Author() {
+    protected Author() {
         // Empty constructor for JPA
     }
 
@@ -41,6 +41,10 @@ public class Author {
     public Author(@NotBlank String name, @Nullable String isni) {
         setName(name);
         setIsni(isni);
+    }
+
+    public long getId() {
+        return id;
     }
 
     public String getName() {
