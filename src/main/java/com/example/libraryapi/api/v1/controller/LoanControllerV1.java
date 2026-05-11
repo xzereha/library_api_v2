@@ -45,14 +45,15 @@ public class LoanControllerV1 {
     }
 
     /**
-     * Endpoint for borrowing a book.
+     * Endpoint for borrowing a book. The username is taken from the authenticated user.
      *
-     * @param request The request payload containing person name and book ID.
+     * @param request The request payload containing the book ID.
      * @return The response payload for the created loan.
      */
     @Operation(
             summary = "Borrow a book",
-            description = "Creates a new loan for a book, marking it as unavailable.")
+            description = "Creates a new loan for a book, marking it as unavailable."
+                    + " The username is derived from the authenticated user.")
     @ApiResponse(
             responseCode = "201",
             description = "Book borrowed successfully")

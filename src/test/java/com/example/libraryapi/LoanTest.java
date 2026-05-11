@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.example.libraryapi.model.Author;
 import com.example.libraryapi.model.Book;
 import com.example.libraryapi.model.Loan;
+import com.example.libraryapi.model.User;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,20 +18,21 @@ class LoanTest {
 
     private final Author author = new Author("George Orwell", null);
     private final Book book = new Book("1984", null, author);
+    private final User user = new User("johndoe", "{noop}password", "USER");
 
     @Test
     void testConstructorValidFieldsConstructs() {
         var loanDate = LocalDate.of(2026, 5, 11);
-        var loan = new Loan("John Doe", loanDate, null, book);
+        var loan = new Loan(user, loanDate, null, book);
         assertNotNull(loan);
-        assertEquals("John Doe", loan.getPersonName());
+        assertEquals("johndoe", loan.getUsername());
         assertEquals(loanDate, loan.getLoanDate());
         assertTrue(loan.getReturnedDate().isEmpty());
         assertEquals(book, loan.getBook());
     }
 
     @Test
-    void testConstructorNullPersonNameThrows() {
+    void testConstructorNullUserThrows() {
         var loanDate = LocalDate.of(2026, 5, 11);
         assertThrows(
                 IllegalArgumentException.class,
@@ -38,18 +40,10 @@ class LoanTest {
     }
 
     @Test
-    void testConstructorBlankPersonNameThrows() {
-        var loanDate = LocalDate.of(2026, 5, 11);
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new Loan("", loanDate, null, book));
-    }
-
-    @Test
     void testConstructorNullLoanDateThrows() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new Loan("John Doe", null, null, book));
+                () -> new Loan(user, null, null, book));
     }
 
     @Test
@@ -57,13 +51,13 @@ class LoanTest {
         var loanDate = LocalDate.of(2026, 5, 11);
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new Loan("John Doe", loanDate, null, null));
+                () -> new Loan(user, loanDate, null, null));
     }
 
     @Test
     void testSetReturnedDate() {
         var loanDate = LocalDate.of(2026, 5, 11);
-        var loan = new Loan("John Doe", loanDate, null, book);
+        var loan = new Loan(user, loanDate, null, book);
         assertTrue(loan.getReturnedDate().isEmpty());
         var returnedDate = LocalDate.of(2026, 5, 18);
         loan.setReturnedDate(returnedDate);
@@ -74,28 +68,28 @@ class LoanTest {
     void testConstructorWithReturnedDate() {
         var loanDate = LocalDate.of(2026, 5, 11);
         var returnedDate = LocalDate.of(2026, 5, 18);
-        var loan = new Loan("John Doe", loanDate, returnedDate, book);
+        var loan = new Loan(user, loanDate, returnedDate, book);
         assertEquals(returnedDate, loan.getReturnedDate().orElseThrow());
     }
 
     @Test
-    void testSetPersonNameBlankThrows() {
+    void testSetUserNullThrows() {
         var loanDate = LocalDate.of(2026, 5, 11);
-        var loan = new Loan("John Doe", loanDate, null, book);
-        assertThrows(IllegalArgumentException.class, () -> loan.setPersonName(""));
+        var loan = new Loan(user, loanDate, null, book);
+        assertThrows(IllegalArgumentException.class, () -> loan.setUser(null));
     }
 
     @Test
     void testSetLoanDateNullThrows() {
         var loanDate = LocalDate.of(2026, 5, 11);
-        var loan = new Loan("John Doe", loanDate, null, book);
+        var loan = new Loan(user, loanDate, null, book);
         assertThrows(IllegalArgumentException.class, () -> loan.setLoanDate(null));
     }
 
     @Test
     void testSetBookNullThrows() {
         var loanDate = LocalDate.of(2026, 5, 11);
-        var loan = new Loan("John Doe", loanDate, null, book);
+        var loan = new Loan(user, loanDate, null, book);
         assertThrows(IllegalArgumentException.class, () -> loan.setBook(null));
     }
 }

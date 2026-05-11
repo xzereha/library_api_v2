@@ -98,13 +98,17 @@ public class AuthorControllerV1 {
      */
     @Operation(
             summary = "Create an author",
-            description = "Creates a new author and returns the created resource.")
+            description = "Creates a new author and returns the created resource. Requires ADMIN role.")
     @ApiResponse(
             responseCode = "201",
             description = "Author created successfully")
     @ApiResponse(
             responseCode = "400",
             description = "Invalid request body – missing or malformed fields",
+            content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions – ADMIN role required",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(
             responseCode = "409",
@@ -128,10 +132,14 @@ public class AuthorControllerV1 {
      */
     @Operation(
             summary = "Delete an author by ID",
-            description = "Deletes an author and all associated books.")
+            description = "Deletes an author and all associated books. Requires ADMIN role.")
     @ApiResponse(
             responseCode = "204",
             description = "Author deleted successfully")
+    @ApiResponse(
+            responseCode = "403",
+            description = "Insufficient permissions – ADMIN role required",
+            content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @ApiResponse(
             responseCode = "404",
             description = "No author with the given ID exists",

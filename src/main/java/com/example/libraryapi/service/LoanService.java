@@ -6,6 +6,7 @@ import com.example.libraryapi.exception.LoanNotFoundException;
 import com.example.libraryapi.model.Loan;
 import com.example.libraryapi.repository.BookRepository;
 import com.example.libraryapi.repository.LoanRepository;
+import com.example.libraryapi.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
@@ -26,16 +27,22 @@ import java.util.Optional;
 public class LoanService {
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
+    private final UserRepository userRepository;
 
     /**
      * Constructor for Spring dependency injection.
      *
      * @param loanRepository Repository for managing loans
      * @param bookRepository Repository for managing books
+     * @param userRepository Repository for user data
      */
-    public LoanService(LoanRepository loanRepository, BookRepository bookRepository) {
+    public LoanService(
+            LoanRepository loanRepository,
+            BookRepository bookRepository,
+            UserRepository userRepository) {
         this.loanRepository = loanRepository;
         this.bookRepository = bookRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -45,21 +52,25 @@ public class LoanService {
      * prevent race conditions where two concurrent requests could both see no active loan
      * and proceed to insert.
      *
-     * @param personName the name of the person borrowing the book
+     * @param username the username of the person borrowing the book
      * @param bookId the ID of the book to borrow
      * @return the created loan
      * @throws BookNotFoundException if no book with the given ID exists
      * @throws BookNotAvailableException if the book already has an active loan
      */
     @Transactional
-    public Loan createLoan(@NotBlank String personName, long bookId) {
+    public Loan createLoan(@NotBlank String username, long bookId) {
         var book = bookRepository
                 .findByIdWithLock(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId));
         if (loanRepository.existsByBookIdAndReturnedDateIsNull(bookId)) {
             throw new BookNotAvailableException(bookId);
         }
-        var loan = new Loan(personName, LocalDate.now(), null, book);
+        var user = userRepository
+                .findByUsername(username)
+                .orElseThrow(
+                        () -> new IllegalStateException("User not found: " + username));
+        var loan = new Loan(user, LocalDate.now(), null, book);
         return loanRepository.save(loan);
     }
 
@@ -99,6 +110,21 @@ public class LoanService {
      */
     public Page<Loan> getAll(Pageable pageable) {
         return loanRepository.findAll(pageable);
+    }
+
+    /**
+     * Get all loans for a specific username, with pagination support.
+     *
+     * @param username the username to filter by
+     * @param pageable pagination information
+     * @return a paginated list of loans for the user
+     */
+    public Page<Loan> getLoansByUsername(String username, Pageable pageable) {
+        var user = userRepository
+                .findByUsername(username)
+                .orElseThrow(
+                        () -> new IllegalStateException("User not found: " + username));
+        return loanRepository.findByUser(user, pageable);
     }
 
     /**

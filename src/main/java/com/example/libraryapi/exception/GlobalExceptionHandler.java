@@ -167,6 +167,22 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles AccessDeniedException and returns a 403 Forbidden response with error details.
+     * This exception is thrown when an authenticated user attempts an operation they are not
+     * authorized to perform (e.g., accessing another user's loan).
+     *
+     * @param ex The AccessDeniedException that was thrown
+     * @param request The HttpServletRequest that resulted in the exception
+     * @return A ProblemDetail object containing error details to be returned in the response body
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ProblemDetail handleAccessDeniedException(
+            org.springframework.security.access.AccessDeniedException ex,
+            HttpServletRequest request) {
+        return buildProblem(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
+    /**
      * Handles any unexpected exceptions that are not explicitly handled by other methods and
      * returns a 500 Internal Server Error response with error details. This serves as a catch-all
      * handler for any exceptions that may occur in the application.

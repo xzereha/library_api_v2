@@ -9,7 +9,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.NotBlank;
 
 import java.time.LocalDate;
 import java.util.Optional;
@@ -21,9 +20,9 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @NotBlank(message = "Person name is required")
-    @Column(nullable = false)
-    private String personName;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false)
     private LocalDate loanDate;
@@ -42,17 +41,17 @@ public class Loan {
     /**
      * Constructor for a new Loan.
      *
-     * @param personName Name of the person borrowing the book
-     * @param loanDate Date the book was loaned
+     * @param user         The user borrowing the book
+     * @param loanDate     Date the book was loaned
      * @param returnedDate Date the book was returned, or null if not yet returned
-     * @param book The book being loaned
+     * @param book         The book being loaned
      */
     public Loan(
-            @NotBlank String personName,
+            User user,
             LocalDate loanDate,
             @Nullable LocalDate returnedDate,
             Book book) {
-        setPersonName(personName);
+        setUser(user);
         setLoanDate(loanDate);
         setReturnedDate(returnedDate);
         setBook(book);
@@ -62,20 +61,24 @@ public class Loan {
         return id;
     }
 
-    public String getPersonName() {
-        return personName;
+    public String getUsername() {
+        return user.getUsername();
+    }
+
+    public User getUser() {
+        return user;
     }
 
     /**
-     * Update the person name of the Loan.
+     * Sets the user for this loan.
      *
-     * @param personName New person name, must not be blank.
+     * @param user The user borrowing the book.
      */
-    public void setPersonName(@NotBlank String personName) {
-        if (personName == null || personName.isBlank()) {
-            throw new IllegalArgumentException("Person name must not be empty");
+    public void setUser(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User must not be null");
         }
-        this.personName = personName;
+        this.user = user;
     }
 
     public LocalDate getLoanDate() {

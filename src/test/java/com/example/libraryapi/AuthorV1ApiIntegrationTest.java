@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,9 +24,11 @@ import org.springframework.test.web.servlet.MockMvc;
         statements =
                 """
                 DELETE FROM loan;
+                DELETE FROM library_user;
                 DELETE FROM book;
                 DELETE FROM author;
                 ALTER TABLE loan ALTER COLUMN id RESTART WITH 1;
+                ALTER TABLE library_user ALTER COLUMN id RESTART WITH 1;
                 ALTER TABLE book ALTER COLUMN id RESTART WITH 1;
                 ALTER TABLE author ALTER COLUMN id RESTART WITH 1;
                 """,
@@ -38,6 +41,7 @@ public class AuthorV1ApiIntegrationTest {
 
     @Nested
     @DisplayName("POST /api/v1/authors")
+    @WithMockUser(roles = "ADMIN")
     class CreateAuthorTests {
         @Test
         @DisplayName("should create a new author and return 201 Created")
@@ -182,6 +186,7 @@ public class AuthorV1ApiIntegrationTest {
 
     @Nested
     @DisplayName("DELETE /api/v1/authors/{id}")
+    @WithMockUser(roles = "ADMIN")
     class DeleteAuthorTests {
 
         @Sql(

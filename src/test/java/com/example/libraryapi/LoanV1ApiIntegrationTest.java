@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,11 +35,15 @@ import java.util.concurrent.atomic.AtomicInteger;
         statements =
                 """
                 DELETE FROM loan;
+                DELETE FROM library_user;
                 DELETE FROM book;
                 DELETE FROM author;
                 ALTER TABLE loan ALTER COLUMN id RESTART WITH 1;
+                ALTER TABLE library_user ALTER COLUMN id RESTART WITH 1;
                 ALTER TABLE book ALTER COLUMN id RESTART WITH 1;
                 ALTER TABLE author ALTER COLUMN id RESTART WITH 1;
+                INSERT INTO library_user (id, username, password, role) VALUES (1, 'user', '{noop}user123', 'USER');
+                INSERT INTO library_user (id, username, password, role) VALUES (2, 'admin', '{noop}admin123', 'ADMIN');
                 """,
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
@@ -49,6 +54,7 @@ public class LoanV1ApiIntegrationTest {
 
     @Nested
     @DisplayName("POST /api/v1/loans")
+    @WithMockUser(username = "user")
     class CreateLoanTests {
 
         @Sql(
@@ -64,7 +70,6 @@ public class LoanV1ApiIntegrationTest {
             String requestBody =
                     """
                     {
-                        "personName": "John Doe",
                         "bookId": 1
                     }
                     """;
@@ -76,7 +81,7 @@ public class LoanV1ApiIntegrationTest {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.version").value(1))
                     .andExpect(jsonPath("$.data.id").exists())
-                    .andExpect(jsonPath("$.data.personName").value("John Doe"))
+                    .andExpect(jsonPath("$.data.username").value("user"))
                     .andExpect(jsonPath("$.data.loanDate").exists())
                     .andExpect(jsonPath("$.data.returnedDate").doesNotExist())
                     .andExpect(jsonPath("$.data.bookId").value(1))
@@ -96,7 +101,6 @@ public class LoanV1ApiIntegrationTest {
             String borrowRequest =
                     """
                     {
-                        "personName": "John Doe",
                         "bookId": 1
                     }
                     """;
@@ -120,7 +124,6 @@ public class LoanV1ApiIntegrationTest {
             String requestBody =
                     """
                     {
-                        "personName": "John Doe",
                         "bookId": 999
                     }
                     """;
@@ -142,10 +145,11 @@ public class LoanV1ApiIntegrationTest {
                         """
                         INSERT INTO author (id, name) VALUES (1, 'George Orwell');
                         INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
-                        INSERT INTO loan (id, person_name, loan_date, book_id) VALUES (1, 'John Doe', '2026-05-11', 1);
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 1, '2026-05-11', 1);
                         """,
                 executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
         @Test
+        @WithMockUser(username = "user")
         @DisplayName("should return a book and set returned date")
         void shouldReturnBook() throws Exception {
             mockMvc.perform(
@@ -154,7 +158,7 @@ public class LoanV1ApiIntegrationTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.version").value(1))
                     .andExpect(jsonPath("$.data.id").value(1))
-                    .andExpect(jsonPath("$.data.personName").value("John Doe"))
+                    .andExpect(jsonPath("$.data.username").value("user"))
                     .andExpect(jsonPath("$.data.loanDate").value("2026-05-11"))
                     .andExpect(jsonPath("$.data.returnedDate").value("2026-05-11"))
                     .andExpect(jsonPath("$.data.bookId").value(1));
@@ -165,10 +169,11 @@ public class LoanV1ApiIntegrationTest {
                         """
                         INSERT INTO author (id, name) VALUES (1, 'George Orwell');
                         INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
-                        INSERT INTO loan (id, person_name, loan_date, returned_date, book_id) VALUES (1, 'John Doe', '2026-05-11', '2026-05-18', 1);
+                        INSERT INTO loan (id, user_id, loan_date, returned_date, book_id) VALUES (1, 1, '2026-05-11', '2026-05-18', 1);
                         """,
                 executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
         @Test
+        @WithMockUser(username = "user")
         @DisplayName("should be idempotent when book is already returned")
         void shouldBeIdempotentWhenAlreadyReturned() throws Exception {
             mockMvc.perform(
@@ -180,12 +185,52 @@ public class LoanV1ApiIntegrationTest {
         }
 
         @Test
+        @WithMockUser(username = "user")
         @DisplayName("should return 404 Not Found when loan does not exist")
         void shouldReturn404WhenLoanNotFound() throws Exception {
             mockMvc.perform(
                             patch("/api/v1/loans/999/return")
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell');
+                        INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
+                        INSERT INTO library_user (id, username, password, role) VALUES (3, 'otheruser', '{noop}user123', 'USER');
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 3, '2026-05-11', 1);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @WithMockUser(username = "user")
+        @DisplayName("should return 403 Forbidden when returning another user's loan")
+        void shouldReturn403WhenReturningOtherUsersLoan() throws Exception {
+            mockMvc.perform(
+                            patch("/api/v1/loans/1/return")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell');
+                        INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
+                        INSERT INTO library_user (id, username, password, role) VALUES (3, 'otheruser', '{noop}user123', 'USER');
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 3, '2026-05-11', 1);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        @DisplayName("should allow admin to return any user's loan")
+        void shouldAllowAdminToReturnAnyLoan() throws Exception {
+            mockMvc.perform(
+                            patch("/api/v1/loans/1/return")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.id").value(1));
         }
     }
 
@@ -198,25 +243,44 @@ public class LoanV1ApiIntegrationTest {
                         """
                         INSERT INTO author (id, name) VALUES (1, 'George Orwell');
                         INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
-                        INSERT INTO loan (id, person_name, loan_date, book_id) VALUES (1, 'John Doe', '2026-05-11', 1);
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 1, '2026-05-11', 1);
                         """,
                 executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
         @Test
+        @WithMockUser(username = "user")
         @DisplayName("should return loan details for a valid ID")
         void shouldReturnLoanById() throws Exception {
             mockMvc.perform(get("/api/v1/loans/1").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.version").value(1))
                     .andExpect(jsonPath("$.data.id").value(1))
-                    .andExpect(jsonPath("$.data.personName").value("John Doe"))
+                    .andExpect(jsonPath("$.data.username").value("user"))
                     .andExpect(jsonPath("$.data.bookTitle").value("1984"));
         }
 
         @Test
+        @WithMockUser(username = "user")
         @DisplayName("should return 404 Not Found for non-existent loan ID")
         void shouldReturn404WhenLoanNotFound() throws Exception {
             mockMvc.perform(get("/api/v1/loans/999").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell');
+                        INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
+                        INSERT INTO library_user (id, username, password, role) VALUES (3, 'otheruser', '{noop}user123', 'USER');
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 3, '2026-05-11', 1);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @WithMockUser(username = "user")
+        @DisplayName("should return 403 Forbidden when viewing another user's loan")
+        void shouldReturn403WhenViewingOtherUsersLoan() throws Exception {
+            mockMvc.perform(get("/api/v1/loans/1").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isForbidden());
         }
     }
 
@@ -230,27 +294,54 @@ public class LoanV1ApiIntegrationTest {
                         INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
                         INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
                         INSERT INTO book (id, title, author_id) VALUES (2, 'The Lord of the Rings', 2);
-                        INSERT INTO loan (id, person_name, loan_date, book_id) VALUES (1, 'John Doe', '2026-05-11', 1);
-                        INSERT INTO loan (id, person_name, loan_date, book_id) VALUES (2, 'Jane Smith', '2026-05-10', 2);
+                        INSERT INTO library_user (id, username, password, role) VALUES (3, 'otheruser', '{noop}user123', 'USER');
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 1, '2026-05-11', 1);
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (2, 3, '2026-05-10', 2);
                         """,
                 executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
         @Test
-        @DisplayName("should return a paginated list of loans")
-        void shouldReturnPaginatedLoans() throws Exception {
+        @WithMockUser(username = "user")
+        @DisplayName("should only return loans for the authenticated user")
+        void shouldReturnOnlyOwnLoans() throws Exception {
+            mockMvc.perform(get("/api/v1/loans").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.version").value(1))
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].username").value("user"))
+                    .andExpect(jsonPath("$.page").value(0))
+                    .andExpect(jsonPath("$.totalElements").value(1))
+                    .andExpect(jsonPath("$.totalPages").value(1));
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
+                        INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
+                        INSERT INTO book (id, title, author_id) VALUES (2, 'The Lord of the Rings', 2);
+                        INSERT INTO library_user (id, username, password, role) VALUES (3, 'otheruser', '{noop}user123', 'USER');
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 1, '2026-05-11', 1);
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (2, 3, '2026-05-10', 2);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        @DisplayName("should return all loans for admin")
+        void shouldReturnAllLoansForAdmin() throws Exception {
             mockMvc.perform(get("/api/v1/loans").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.version").value(1))
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data.length()").value(2))
-                    .andExpect(jsonPath("$.data[*].personName",
-                            hasItems("John Doe", "Jane Smith")))
-                    .andExpect(jsonPath("$.page").value(0))
-                    .andExpect(jsonPath("$.totalElements").value(2))
-                    .andExpect(jsonPath("$.totalPages").value(1));
+                    .andExpect(jsonPath("$.data[*].username",
+                            hasItems("user", "otheruser")))
+                    .andExpect(jsonPath("$.totalElements").value(2));
         }
 
         @Test
-        @DisplayName("should return empty page when no loans exist")
+        @WithMockUser(username = "user")
+        @DisplayName("should return empty page when user has no loans")
         void shouldReturnEmptyPageWhenNoLoans() throws Exception {
             mockMvc.perform(get("/api/v1/loans").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
@@ -286,7 +377,7 @@ public class LoanV1ApiIntegrationTest {
                         """
                         INSERT INTO author (id, name) VALUES (1, 'George Orwell');
                         INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
-                        INSERT INTO loan (id, person_name, loan_date, book_id) VALUES (1, 'John Doe', '2026-05-11', 1);
+                        INSERT INTO loan (id, user_id, loan_date, book_id) VALUES (1, 1, '2026-05-11', 1);
                         """,
                 executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
         @Test
@@ -302,7 +393,7 @@ public class LoanV1ApiIntegrationTest {
                         """
                         INSERT INTO author (id, name) VALUES (1, 'George Orwell');
                         INSERT INTO book (id, title, author_id) VALUES (1, '1984', 1);
-                        INSERT INTO loan (id, person_name, loan_date, returned_date, book_id) VALUES (1, 'John Doe', '2026-05-11', '2026-05-18', 1);
+                        INSERT INTO loan (id, user_id, loan_date, returned_date, book_id) VALUES (1, 1, '2026-05-11', '2026-05-18', 1);
                         """,
                 executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
         @Test
@@ -339,13 +430,12 @@ public class LoanV1ApiIntegrationTest {
             var tt = new TransactionTemplate(transactionManager);
 
             for (int i = 0; i < threadCount; i++) {
-                int threadId = i;
                 Thread.ofVirtual().start(() -> {
                     try {
                         latch.countDown();
                         latch.await();
                         tt.executeWithoutResult(status -> {
-                            loanService.createLoan("Thread-" + threadId, 1L);
+                            loanService.createLoan("user", 1L);
                             successCount.incrementAndGet();
                         });
                     } catch (BookNotAvailableException

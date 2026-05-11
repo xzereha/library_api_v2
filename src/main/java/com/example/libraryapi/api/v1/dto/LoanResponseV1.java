@@ -24,11 +24,11 @@ public record LoanResponseV1(
                 Long id,
         @Nonnull
                 @Schema(
-                        description = "Name of the person who borrowed the book",
-                        example = "John Doe",
+                        description = "Username of the person who borrowed the book",
+                        example = "johndoe",
                         requiredMode = Schema.RequiredMode.REQUIRED,
                         nullable = false)
-                String personName,
+                String username,
         @Nonnull
                 @Schema(
                         description = "Date the book was loaned",
@@ -66,7 +66,7 @@ public record LoanResponseV1(
     public static LoanResponseV1 fromLoan(Loan loan) {
         return new LoanResponseV1(
                 loan.getId(),
-                loan.getPersonName(),
+                loan.getUser().getUsername(),
                 loan.getLoanDate(),
                 loan.getReturnedDate().orElse(null),
                 loan.getBook().getId(),
