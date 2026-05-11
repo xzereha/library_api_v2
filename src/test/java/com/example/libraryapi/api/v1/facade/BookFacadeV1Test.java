@@ -13,6 +13,7 @@ import com.example.libraryapi.exception.BookNotFoundException;
 import com.example.libraryapi.model.Author;
 import com.example.libraryapi.model.Book;
 import com.example.libraryapi.service.BookService;
+import com.example.libraryapi.service.LoanService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +30,17 @@ import java.util.Optional;
 @ExtendWith(MockitoExtension.class)
 class BookFacadeV1Test {
     @Mock private BookService bookService;
+    @Mock private LoanService loanService;
 
     private BookFacadeV1 facade;
 
     @BeforeEach
     void setUp() {
-        facade = new BookFacadeV1(bookService);
+        facade = new BookFacadeV1(bookService, loanService);
+    }
+
+    private void stubNoActiveLoan() {
+        when(loanService.hasActiveLoan(anyLong())).thenReturn(false);
     }
 
     @Test
@@ -62,6 +68,7 @@ class BookFacadeV1Test {
     void getBooksWithNoFiltersDelegatesToGetAll() {
         var author = new Author("Test Author", null);
         var books = List.of(new Book("Book A", null, author));
+        when(loanService.hasActiveLoan(anyLong())).thenReturn(false);
         when(bookService.getAll(Pageable.unpaged()))
                 .thenReturn(new PageImpl<>(books));
         var result = facade.getBooks(null, null, null, Pageable.unpaged());
@@ -75,6 +82,7 @@ class BookFacadeV1Test {
         var author = new Author("Test Author", null);
         var books = List.of(new Book("Book A", "9780141037145", author));
         var pageable = Pageable.unpaged();
+        when(loanService.hasActiveLoan(anyLong())).thenReturn(false);
         when(bookService.searchBooks(eq("9780141037145"), isNull(), isNull(), eq(pageable)))
                 .thenReturn(new PageImpl<>(books));
         var result = facade.getBooks("9780141037145", null, null, pageable);
@@ -86,6 +94,7 @@ class BookFacadeV1Test {
         var author = new Author("Test Author", null);
         var books = List.of(new Book("Lord of the Rings", null, author));
         var pageable = Pageable.unpaged();
+        stubNoActiveLoan();
         when(bookService.searchBooks(isNull(), eq("lord"), isNull(), eq(pageable)))
                 .thenReturn(new PageImpl<>(books));
         var result = facade.getBooks(null, "lord", null, pageable);
@@ -97,6 +106,7 @@ class BookFacadeV1Test {
         var author = new Author("J.R.R. Tolkien", null);
         var books = List.of(new Book("Lord of the Rings", null, author));
         var pageable = Pageable.unpaged();
+        stubNoActiveLoan();
         when(bookService.searchBooks(isNull(), isNull(), eq("tolkien"), eq(pageable)))
                 .thenReturn(new PageImpl<>(books));
         var result = facade.getBooks(null, null, "tolkien", pageable);
@@ -108,6 +118,7 @@ class BookFacadeV1Test {
         var author = new Author("J.R.R. Tolkien", null);
         var books = List.of(new Book("Lord of the Rings", "9780544003415", author));
         var pageable = Pageable.unpaged();
+        stubNoActiveLoan();
         when(bookService.searchBooks(
                 eq("9780544003415"), eq("lord"), eq("tolkien"), eq(pageable)))
                 .thenReturn(new PageImpl<>(books));

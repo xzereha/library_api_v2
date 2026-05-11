@@ -50,6 +50,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles LoanNotFoundException and returns a 404 Not Found response with error details.
+     *
+     * @param ex The LoanNotFoundException that was thrown
+     * @param request The HttpServletRequest that resulted in the exception
+     * @return A ProblemDetail object containing error details to be returned in the response body
+     */
+    @ExceptionHandler(LoanNotFoundException.class)
+    public ProblemDetail handleLoanNotFoundException(
+            LoanNotFoundException ex, HttpServletRequest request) {
+        return buildProblem(HttpStatus.NOT_FOUND, ex.getMessage(), request);
+    }
+
+    /**
      * Handles NoResourceFoundException and returns a 404 Not Found response with error details.
      *
      * @param ex The NoResourceFoundException that was thrown
@@ -63,7 +76,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles BookNotAvailableException and returns a 400 Bad Request response with error details.
+     * Handles BookNotAvailableException and returns a 409 Conflict response with error details.
      * This exception is typically thrown when a client attempts to create a loan for a book that is
      * not currently available (e.g., because it is already loaned out).
      *
@@ -74,7 +87,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BookNotAvailableException.class)
     public ProblemDetail handleBookNotAvailableException(
             BookNotAvailableException ex, HttpServletRequest request) {
-        return buildProblem(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+        return buildProblem(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
     /**

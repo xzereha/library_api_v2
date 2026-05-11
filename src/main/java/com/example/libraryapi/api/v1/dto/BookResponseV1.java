@@ -46,20 +46,28 @@ public record BookResponseV1(
                         example = "1",
                         requiredMode = Schema.RequiredMode.REQUIRED,
                         nullable = false)
-                long authorId) {
+                long authorId,
+        @Schema(
+                        description = "Whether the book is available for borrowing",
+                        example = "true",
+                        requiredMode = Schema.RequiredMode.REQUIRED,
+                        nullable = false)
+                boolean isAvailable) {
 
     /**
-     * Converts a {@link Book Book} to a DTO.
+     * Converts a {@link Book Book} to a DTO with availability information.
      *
      * @param book the book to convert
+     * @param isAvailable whether the book is available for borrowing
      * @return the converted DTO
      */
-    public static BookResponseV1 fromBook(Book book) {
+    public static BookResponseV1 fromBook(Book book, boolean isAvailable) {
         return new BookResponseV1(
                 book.getId(),
                 book.getTitle(),
                 book.getIsbn().orElse(null),
                 book.getAuthor().getName(),
-                book.getAuthor().getId());
+                book.getAuthor().getId(),
+                isAvailable);
     }
 }

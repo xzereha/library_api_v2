@@ -2,11 +2,16 @@ package com.example.libraryapi.repository;
 
 import com.example.libraryapi.model.Book;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 /** Database repository for {@link Book Book}. */
 public interface BookRepository extends JpaRepository<Book, Long> {
@@ -42,4 +47,17 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             @Param("title") String title,
             @Param("authorName") String authorName,
             Pageable pageable);
+
+    /**
+     * Find a book by ID with a pessimistic write lock.
+     *
+     * <p>Used to serialize concurrent loan creation for the same book and prevent race conditions
+     * where two transactions both see no active loan and proceed to insert.
+     *
+     * @param id the ID of the book
+     * @return an {@link Optional} containing the book or empty if not found
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Book b WHERE b.id = :id")
+    Optional<Book> findByIdWithLock(@Param("id") Long id);
 }

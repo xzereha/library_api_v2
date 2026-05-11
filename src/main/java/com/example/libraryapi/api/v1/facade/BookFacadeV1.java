@@ -6,6 +6,7 @@ import com.example.libraryapi.api.v1.dto.BookRequestV1;
 import com.example.libraryapi.api.v1.dto.BookResponseV1;
 import com.example.libraryapi.exception.BookNotFoundException;
 import com.example.libraryapi.service.BookService;
+import com.example.libraryapi.service.LoanService;
 
 import jakarta.annotation.Nullable;
 
@@ -25,14 +26,21 @@ import java.util.Optional;
 public class BookFacadeV1 {
     static final int VERSION = 1;
     private final BookService bookService;
+    private final LoanService loanService;
 
     /**
      * Constructor.
      *
      * @param bookService the service to use for managing books
+     * @param loanService the service to use for checking book availability
      */
-    public BookFacadeV1(BookService bookService) {
+    public BookFacadeV1(BookService bookService, LoanService loanService) {
         this.bookService = bookService;
+        this.loanService = loanService;
+    }
+
+    private BookResponseV1 toResponse(com.example.libraryapi.model.Book book) {
+        return BookResponseV1.fromBook(book, !loanService.hasActiveLoan(book.getId()));
     }
 
     /**
@@ -53,7 +61,7 @@ public class BookFacadeV1 {
         var page = hasFilters
                 ? bookService.searchBooks(isbn, title, authorName, pageable)
                 : bookService.getAll(pageable);
-        var books = page.getContent().stream().map(BookResponseV1::fromBook).toList();
+        var books = page.getContent().stream().map(this::toResponse).toList();
         return new PagedResponse<>(
                 books,
                 page.getNumber(),
@@ -73,7 +81,7 @@ public class BookFacadeV1 {
     public BookResponseV1 getBook(Long id) {
         return bookService
                 .getBookById(id)
-                .map(BookResponseV1::fromBook)
+                .map(this::toResponse)
                 .orElseThrow(() -> new BookNotFoundException(id));
     }
 
@@ -87,7 +95,7 @@ public class BookFacadeV1 {
         var book =
                 bookService.createBook(
                         request.title(), Optional.ofNullable(request.isbn()), request.authorId());
-        return BookResponseV1.fromBook(book);
+        return toResponse(book);
     }
 
     /**
@@ -99,7 +107,7 @@ public class BookFacadeV1 {
      */
     public PagedResponse<BookResponseV1> getBooksByAuthorId(long authorId, Pageable pageable) {
         var page = bookService.getBooksByAuthorId(authorId, pageable);
-        var books = page.getContent().stream().map(BookResponseV1::fromBook).toList();
+        var books = page.getContent().stream().map(this::toResponse).toList();
         return new PagedResponse<>(
                 books,
                 page.getNumber(),
