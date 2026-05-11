@@ -1,6 +1,7 @@
 package com.example.libraryapi;
 
 import static org.hamcrest.Matchers.hasItems;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -14,16 +15,20 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Integration tests for the v2 author endpoints. */
 @Sql(
         statements =
                 """
+                DELETE FROM book;
                 DELETE FROM author;
+                ALTER TABLE book ALTER COLUMN id RESTART WITH 1;
                 ALTER TABLE author ALTER COLUMN id RESTART WITH 1;
                 """,
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @SpringBootTest(properties = "spring.cache.type=none")
 @AutoConfigureMockMvc
 public class AuthorV1ApiIntegrationTest {
@@ -135,6 +140,41 @@ public class AuthorV1ApiIntegrationTest {
         @DisplayName("should return 404 Not Found for non-existent ID")
         void shouldReturnNotFoundForNonExistentId() throws Exception {
             mockMvc.perform(get("/api/v2/authors/999").contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /api/v1/authors/{id}")
+    class DeleteAuthorTests {
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell');
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should delete an existing author and return 204 No Content")
+        void shouldDeleteAuthorAndReturn204() throws Exception {
+            mockMvc.perform(
+                            delete("/api/v1/authors/1")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNoContent());
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell');
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should return 404 Not Found when deleting non-existent author")
+        void shouldReturn404WhenAuthorNotFound() throws Exception {
+            mockMvc.perform(
+                            delete("/api/v1/authors/999")
+                                    .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
         }
     }

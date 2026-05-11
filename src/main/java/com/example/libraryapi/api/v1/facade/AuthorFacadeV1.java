@@ -1,5 +1,6 @@
 package com.example.libraryapi.api.v1.facade;
 
+import com.example.libraryapi.api.PagedResponse;
 import com.example.libraryapi.api.v1.dto.AuthorRequestV1;
 import com.example.libraryapi.api.v1.dto.AuthorResponseV1;
 import com.example.libraryapi.exception.AuthorNotFoundException;
@@ -7,9 +8,9 @@ import com.example.libraryapi.service.AuthorService;
 
 import lombok.NonNull;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,6 +20,7 @@ import java.util.Optional;
  */
 @Service
 public class AuthorFacadeV1 {
+    static final int VERSION = 1;
     private final AuthorService authorService;
 
     /**
@@ -30,8 +32,22 @@ public class AuthorFacadeV1 {
         this.authorService = authorService;
     }
 
-    public List<AuthorResponseV1> getAuthors() {
-        return authorService.getAll().stream().map(AuthorResponseV1::fromAuthor).toList();
+    /**
+     * Get all authors with pagination.
+     *
+     * @param pageable pagination information
+     * @return a paginated response of authors
+     */
+    public PagedResponse<AuthorResponseV1> getAuthors(Pageable pageable) {
+        var page = authorService.getAll(pageable);
+        var authors = page.getContent().stream().map(AuthorResponseV1::fromAuthor).toList();
+        return new PagedResponse<>(
+                authors,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                VERSION);
     }
 
     /**
@@ -59,5 +75,18 @@ public class AuthorFacadeV1 {
                 authorService.createAuthor(request.name(), Optional.ofNullable(request.isni()));
         return new AuthorResponseV1(
                 author.getId(), author.getName(), author.getIsni().orElse(null));
+    }
+
+    /**
+     * Delete an author by ID.
+     *
+     * @param id the ID of the author to delete
+     * @throws AuthorNotFoundException if no author with the given ID exists
+     */
+    public void deleteAuthor(long id) {
+        authorService
+                .getAuthorById(id)
+                .orElseThrow(() -> new AuthorNotFoundException(id));
+        authorService.deleteAuthor(id);
     }
 }

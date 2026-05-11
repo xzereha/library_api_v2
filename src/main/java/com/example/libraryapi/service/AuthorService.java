@@ -7,10 +7,11 @@ import jakarta.validation.constraints.NotBlank;
 
 import lombok.NonNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.List;
 import java.util.Optional;
 
 /** Service layer for managing {@link com.example.libraryapi.model.Author Authors}. */
@@ -60,8 +61,14 @@ public class AuthorService {
         return authorRepository.findByIsni(isni);
     }
 
-    public List<Author> getAll() {
-        return authorRepository.findAll();
+    /**
+     * Get all {@link Author Authors} with pagination support.
+     *
+     * @param pageable pagination information
+     * @return a paginated list of authors
+     */
+    public Page<Author> getAll(Pageable pageable) {
+        return authorRepository.findAll(pageable);
     }
 
     /**

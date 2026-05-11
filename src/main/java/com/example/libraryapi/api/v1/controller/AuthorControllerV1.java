@@ -1,6 +1,7 @@
 package com.example.libraryapi.api.v1.controller;
 
 import com.example.libraryapi.api.ErrorResponse;
+import com.example.libraryapi.api.PagedResponse;
 import com.example.libraryapi.api.Response;
 import com.example.libraryapi.api.v1.dto.AuthorRequestV1;
 import com.example.libraryapi.api.v1.dto.AuthorResponseV1;
@@ -13,9 +14,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.List;
 
 /** API controller for {@link com.example.libraryapi.model.Author Author}. */
 @RestController
@@ -42,9 +44,16 @@ public class AuthorControllerV1 {
         this.facade = facadeV1;
     }
 
+    /**
+     * Endpoint for retrieving all authors with pagination support.
+     *
+     * @param pageable pagination information
+     * @return A paginated response of authors
+     */
+    @Operation(summary = "Get all authors with pagination")
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Response<List<AuthorResponseV1>>> getAll() {
-        return ResponseEntity.ok(new Response<>(facade.getAuthors(), VERSION));
+    public ResponseEntity<PagedResponse<AuthorResponseV1>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(facade.getAuthors(pageable));
     }
 
     /**
@@ -110,5 +119,26 @@ public class AuthorControllerV1 {
         var response = facade.createAuthor(authorRequest);
         var location = URI.create("/api/v" + VERSION + "/authors/" + response.id());
         return ResponseEntity.created(location).body(new Response<>(response, VERSION));
+    }
+
+    /**
+     * Endpoint for deleting an author by ID.
+     *
+     * @param id The ID of the author to delete.
+     * @return A 204 No Content response if the author was deleted.
+     */
+    @Operation(summary = "Delete an author by ID")
+    @ApiResponse(
+            responseCode = "204",
+            description = "Author deleted successfully")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Author not found",
+            content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAuthor(
+            @PathVariable(name = "id", required = true) final long id) {
+        facade.deleteAuthor(id);
+        return ResponseEntity.noContent().build();
     }
 }
