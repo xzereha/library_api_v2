@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -45,18 +46,36 @@ public class BookControllerV1 {
     }
 
     /**
-     * Endpoint for retrieving all books with pagination support.
+     * Endpoint for retrieving all books with pagination support and optional filters.
      *
+     * @param isbn optional exact ISBN match
+     * @param title optional case-insensitive partial title match
+     * @param authorName optional case-insensitive partial author name match
      * @param pageable pagination information
      * @return A paginated response of books
      */
-    @Operation(summary = "Get all books", description = "Returns a paginated list of all books.")
+    @Operation(
+            summary = "Get all books",
+            description = "Returns a paginated list of books, optionally filtered by ISBN, title"
+                    + " (case-insensitive partial), or author name (case-insensitive partial).")
     @ApiResponse(
             responseCode = "200",
             description = "Paginated list of books retrieved successfully")
     @GetMapping("/books")
-    public ResponseEntity<PagedResponse<BookResponseV1>> getAll(Pageable pageable) {
-        return ResponseEntity.ok(facade.getBooks(pageable));
+    public ResponseEntity<PagedResponse<BookResponseV1>> getAll(
+            @RequestParam(required = false)
+            @Parameter(description = "Exact ISBN match", example = "9780141037145")
+            String isbn,
+            @RequestParam(required = false)
+            @Parameter(description = "Case-insensitive partial title match", example = "lord")
+            String title,
+            @RequestParam(required = false)
+            @Parameter(
+                    description = "Case-insensitive partial author name match",
+                    example = "orwell")
+            String authorName,
+            Pageable pageable) {
+        return ResponseEntity.ok(facade.getBooks(isbn, title, authorName, pageable));
     }
 
     /**

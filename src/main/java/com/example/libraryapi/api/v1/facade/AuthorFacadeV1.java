@@ -45,13 +45,11 @@ public class AuthorFacadeV1 {
     public PagedResponse<AuthorResponseV1> getAuthors(@Nullable String isni, Pageable pageable) {
         if (isni != null) {
             var authorOpt = authorService.getAuthorByIsni(isni);
-            var authors = authorOpt
-                    .map(a -> List.of(AuthorResponseV1.fromAuthor(a)))
-                    .orElseGet(List::of);
+            var authors =
+                    authorOpt.map(a -> List.of(AuthorResponseV1.fromAuthor(a))).orElseGet(List::of);
             int pageSize = pageable.isUnpaged() ? 1 : pageable.getPageSize();
             return new PagedResponse<>(
-                    authors, 0, pageSize,
-                    (long) authors.size(), authors.isEmpty() ? 0 : 1, VERSION);
+                    authors, 0, pageSize, authors.size(), authors.isEmpty() ? 0 : 1, VERSION);
         }
         var page = authorService.getAll(pageable);
         var authors = page.getContent().stream().map(AuthorResponseV1::fromAuthor).toList();
@@ -98,9 +96,7 @@ public class AuthorFacadeV1 {
      * @throws AuthorNotFoundException if no author with the given ID exists
      */
     public void deleteAuthor(long id) {
-        authorService
-                .getAuthorById(id)
-                .orElseThrow(() -> new AuthorNotFoundException(id));
+        authorService.getAuthorById(id).orElseThrow(() -> new AuthorNotFoundException(id));
         authorService.deleteAuthor(id);
     }
 }

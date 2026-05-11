@@ -278,6 +278,115 @@ public class BookV1ApiIntegrationTest {
                     .andExpect(jsonPath("$.totalElements").value(3))
                     .andExpect(jsonPath("$.totalPages").value(2));
         }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (1, '1984', '9780141037145', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (2, 'Animal Farm', '9780141036131', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (3, 'The Lord of the Rings', '9780544003415', 2);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should filter books by exact ISBN")
+        void shouldFilterByIsbn() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/books?isbn=9780141037145")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].title").value("1984"))
+                    .andExpect(jsonPath("$.data[0].isbn").value("9780141037145"))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (1, '1984', '9780141037145', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (2, 'Animal Farm', '9780141036131', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (3, 'The Lord of the Rings', '9780544003415', 2);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should filter books by title case-insensitive partial match")
+        void shouldFilterByTitleCaseInsensitivePartial() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/books?title=lord of the")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].title").value("The Lord of the Rings"))
+                    .andExpect(jsonPath("$.data[0].authorName").value("J.R.R. Tolkien"))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (1, '1984', '9780141037145', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (2, 'Animal Farm', '9780141036131', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (3, 'The Lord of the Rings', '9780544003415', 2);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should filter books by author name case-insensitive partial match")
+        void shouldFilterByAuthorNamePartial() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/books?authorName=ORWELL")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(2))
+                    .andExpect(jsonPath("$.data[*].title",
+                            hasItems("1984", "Animal Farm")))
+                    .andExpect(jsonPath("$.totalElements").value(2));
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (1, '1984', '9780141037145', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (2, 'Animal Farm', '9780141036131', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (3, 'The Lord of the Rings', '9780544003415', 2);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should filter books by title and author name combined")
+        void shouldFilterByTitleAndAuthorName() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/books?title=farm&authorName=orwell")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].title").value("Animal Farm"))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name) VALUES (1, 'George Orwell'), (2, 'J.R.R. Tolkien');
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (1, '1984', '9780141037145', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (2, 'Animal Farm', '9780141036131', 1);
+                        INSERT INTO book (id, title, isbn, author_id) VALUES (3, 'The Lord of the Rings', '9780544003415', 2);
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should return empty list when no books match filters")
+        void shouldReturnEmptyWhenNoBooksMatchFilters() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/books?title=nonexistent")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data").isEmpty())
+                    .andExpect(jsonPath("$.totalElements").value(0))
+                    .andExpect(jsonPath("$.totalPages").value(0));
+        }
     }
 
     @Nested
@@ -413,6 +522,10 @@ public class BookV1ApiIntegrationTest {
                             delete("/api/v1/books/1")
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNoContent());
+            mockMvc.perform(
+                            get("/api/v1/books/1")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
         }
 
         @Test

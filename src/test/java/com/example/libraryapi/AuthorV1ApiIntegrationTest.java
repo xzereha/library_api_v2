@@ -195,6 +195,10 @@ public class AuthorV1ApiIntegrationTest {
                             delete("/api/v1/authors/1")
                                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNoContent());
+            mockMvc.perform(
+                            get("/api/v1/authors/1")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
         }
 
         @Sql(

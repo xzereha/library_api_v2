@@ -5,6 +5,7 @@ import com.example.libraryapi.exception.BookNotFoundException;
 import com.example.libraryapi.model.Book;
 import com.example.libraryapi.repository.BookRepository;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 
 import lombok.NonNull;
@@ -70,6 +71,23 @@ public class BookService {
      */
     public Page<Book> getAll(Pageable pageable) {
         return bookRepository.findAll(pageable);
+    }
+
+    /**
+     * Search books with optional filters.
+     *
+     * @param isbn exact ISBN match, or null for no filter
+     * @param title case-insensitive partial title match, or null for no filter
+     * @param authorName case-insensitive partial author name match, or null for no filter
+     * @param pageable pagination information
+     * @return a filtered paginated list of books
+     */
+    public Page<Book> searchBooks(
+            @Nullable String isbn,
+            @Nullable String title,
+            @Nullable String authorName,
+            Pageable pageable) {
+        return bookRepository.searchBooks(isbn, title, authorName, pageable);
     }
 
     /**

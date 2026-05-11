@@ -7,6 +7,8 @@ import com.example.libraryapi.api.v1.dto.BookResponseV1;
 import com.example.libraryapi.exception.BookNotFoundException;
 import com.example.libraryapi.service.BookService;
 
+import jakarta.annotation.Nullable;
+
 import lombok.NonNull;
 
 import org.springframework.data.domain.Pageable;
@@ -34,13 +36,23 @@ public class BookFacadeV1 {
     }
 
     /**
-     * Get all books with pagination.
+     * Get all books with pagination and optional filters.
      *
+     * @param isbn optional exact ISBN match, null to ignore
+     * @param title optional case-insensitive partial title match, null to ignore
+     * @param authorName optional case-insensitive partial author name match, null to ignore
      * @param pageable pagination information
      * @return a paginated response of books
      */
-    public PagedResponse<BookResponseV1> getBooks(Pageable pageable) {
-        var page = bookService.getAll(pageable);
+    public PagedResponse<BookResponseV1> getBooks(
+            @Nullable String isbn,
+            @Nullable String title,
+            @Nullable String authorName,
+            Pageable pageable) {
+        boolean hasFilters = isbn != null || title != null || authorName != null;
+        var page = hasFilters
+                ? bookService.searchBooks(isbn, title, authorName, pageable)
+                : bookService.getAll(pageable);
         var books = page.getContent().stream().map(BookResponseV1::fromBook).toList();
         return new PagedResponse<>(
                 books,
