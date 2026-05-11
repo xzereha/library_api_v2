@@ -18,7 +18,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.test.web.servlet.MockMvc;
 
-/** Integration tests for the v2 author endpoints. */
+/** Integration tests for the v1 author endpoints. */
 @Sql(
         statements =
                 """
@@ -191,13 +191,9 @@ public class AuthorV1ApiIntegrationTest {
         @Test
         @DisplayName("should delete an existing author and return 204 No Content")
         void shouldDeleteAuthorAndReturn204() throws Exception {
-            mockMvc.perform(
-                            delete("/api/v1/authors/1")
-                                    .contentType(MediaType.APPLICATION_JSON))
+            mockMvc.perform(delete("/api/v1/authors/1").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNoContent());
-            mockMvc.perform(
-                            get("/api/v1/authors/1")
-                                    .contentType(MediaType.APPLICATION_JSON))
+            mockMvc.perform(get("/api/v1/authors/1").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
         }
 
@@ -210,9 +206,7 @@ public class AuthorV1ApiIntegrationTest {
         @Test
         @DisplayName("should return 404 Not Found when deleting non-existent author")
         void shouldReturn404WhenAuthorNotFound() throws Exception {
-            mockMvc.perform(
-                            delete("/api/v1/authors/999")
-                                    .contentType(MediaType.APPLICATION_JSON))
+            mockMvc.perform(delete("/api/v1/authors/999").contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isNotFound());
         }
     }
