@@ -10,7 +10,7 @@ import jakarta.annotation.Nullable;
 import org.springframework.validation.annotation.Validated;
 
 /** Response DTO for {@link com.example.libraryapi.model.Author Author}. */
-@Schema(description = "Response payload for creating an author.")
+@Schema(description = "Response payload for an author.")
 @Validated
 public record AuthorResponseV1(
         @Nonnull

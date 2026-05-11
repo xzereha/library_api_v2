@@ -6,11 +6,14 @@ import com.example.libraryapi.api.v1.dto.AuthorResponseV1;
 import com.example.libraryapi.exception.AuthorNotFoundException;
 import com.example.libraryapi.service.AuthorService;
 
+import jakarta.annotation.Nullable;
+
 import lombok.NonNull;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,12 +36,23 @@ public class AuthorFacadeV1 {
     }
 
     /**
-     * Get all authors with pagination.
+     * Get authors with pagination, optionally filtered by ISNI.
      *
+     * @param isni optional ISNI filter (exact match), null to return all authors
      * @param pageable pagination information
      * @return a paginated response of authors
      */
-    public PagedResponse<AuthorResponseV1> getAuthors(Pageable pageable) {
+    public PagedResponse<AuthorResponseV1> getAuthors(@Nullable String isni, Pageable pageable) {
+        if (isni != null) {
+            var authorOpt = authorService.getAuthorByIsni(isni);
+            var authors = authorOpt
+                    .map(a -> List.of(AuthorResponseV1.fromAuthor(a)))
+                    .orElseGet(List::of);
+            int pageSize = pageable.isUnpaged() ? 1 : pageable.getPageSize();
+            return new PagedResponse<>(
+                    authors, 0, pageSize,
+                    (long) authors.size(), authors.isEmpty() ? 0 : 1, VERSION);
+        }
         var page = authorService.getAll(pageable);
         var authors = page.getContent().stream().map(AuthorResponseV1::fromAuthor).toList();
         return new PagedResponse<>(

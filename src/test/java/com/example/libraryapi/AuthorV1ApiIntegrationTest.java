@@ -111,6 +111,40 @@ public class AuthorV1ApiIntegrationTest {
                     .andExpect(jsonPath("$.data").isArray())
                     .andExpect(jsonPath("$.data").isEmpty());
         }
+
+        @Sql(
+                statements =
+                        """
+                        INSERT INTO author (id, name, isni) VALUES (1, 'George Orwell', '0000000121351230');
+                        """,
+                executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+        @Test
+        @DisplayName("should return author when filtering by valid ISNI")
+        void shouldReturnAuthorByIsni() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/authors?isni=0000000121351230")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.version").value(1))
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data.length()").value(1))
+                    .andExpect(jsonPath("$.data[0].id").value(1))
+                    .andExpect(jsonPath("$.data[0].name").value("George Orwell"))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Test
+        @DisplayName("should return empty page when filtering by non-existent ISNI")
+        void shouldReturnEmptyPageForUnknownIsni() throws Exception {
+            mockMvc.perform(
+                            get("/api/v1/authors?isni=0000000000000000")
+                                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.version").value(1))
+                    .andExpect(jsonPath("$.data").isArray())
+                    .andExpect(jsonPath("$.data").isEmpty())
+                    .andExpect(jsonPath("$.totalElements").value(0));
+        }
     }
 
     @Nested

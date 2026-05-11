@@ -21,7 +21,7 @@ public record BookRequestV1(
                 String title,
         @Nullable
                 @Schema(
-                        description = "ISBN-13 of the book",
+                        description = "ISBN-13 (hyphens/spaces allowed, will be compacted)",
                         example = "978-0-618-05682-4",
                         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
                         nullable = true)

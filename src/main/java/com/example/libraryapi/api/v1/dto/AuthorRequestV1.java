@@ -9,7 +9,7 @@ import lombok.NonNull;
 
 import org.springframework.validation.annotation.Validated;
 
-/** Request DTO for {@link com.example.libraryapi.model.Author Author}. */
+/** Request DTO for creating an {@link com.example.libraryapi.model.Author Author}. */
 @Schema(description = "Request payload for creating an author.")
 @Validated
 public record AuthorRequestV1(
@@ -17,13 +17,13 @@ public record AuthorRequestV1(
                 @NotBlank(message = "Name is required.")
                 @Schema(
                         description = "Name of the author",
-                        example = "J.R.R Tokien",
+                        example = "J.R.R. Tolkien",
                         requiredMode = Schema.RequiredMode.REQUIRED,
                         nullable = false)
                 String name,
         @Nullable
                 @Schema(
-                        description = "ISNI of the author",
+                        description = "ISNI of the author (16 digits, spaces allowed)",
                         example = "0000 0001 2135 1230",
                         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
                         nullable = true)
