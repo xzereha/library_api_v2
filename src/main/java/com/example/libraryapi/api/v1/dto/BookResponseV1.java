@@ -29,7 +29,7 @@ public record BookResponseV1(
                 String title,
         @Schema(
                         description = "ISBN-13 of the book",
-                        example = "9780618056824",
+                        example = "978-0008471286",
                         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
                         nullable = true)
                 @Nullable
