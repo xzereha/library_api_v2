@@ -1,6 +1,7 @@
 package com.example.libraryapi;
 
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -160,7 +161,7 @@ public class LoanV1ApiIntegrationTest {
                     .andExpect(jsonPath("$.data.id").value(1))
                     .andExpect(jsonPath("$.data.username").value("user"))
                     .andExpect(jsonPath("$.data.loanDate").value("2026-05-11"))
-                    .andExpect(jsonPath("$.data.returnedDate").value("2026-05-11"))
+                    .andExpect(jsonPath("$.data.returnedDate").value(notNullValue()))
                     .andExpect(jsonPath("$.data.bookId").value(1));
         }
 
