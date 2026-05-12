@@ -63,9 +63,11 @@ public class AuthorControllerV1 {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PagedResponse<AuthorResponseV1>> getAll(
             @Nullable
-            @RequestParam(name = "isni", required = false)
-            @Parameter(description = "Filter by ISNI (exact match)", example = "0000000121351230")
-            final String isni,
+                    @RequestParam(name = "isni", required = false)
+                    @Parameter(
+                            description = "Filter by ISNI (exact match)",
+                            example = "0000000121351230")
+                    final String isni,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getAuthors(isni, pageable));
     }
@@ -87,7 +89,8 @@ public class AuthorControllerV1 {
     @GetMapping(path = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response<AuthorResponseV1>> getAuthorById(
             @Parameter(description = "ID of the author to retrieve", example = "1", required = true)
-            @PathVariable(name = "id", required = true) final long id) {
+                    @PathVariable(name = "id", required = true)
+                    final long id) {
         return ResponseEntity.ok(new Response<>(facade.getAuthor(id), VERSION));
     }
 
@@ -99,10 +102,10 @@ public class AuthorControllerV1 {
      */
     @Operation(
             summary = "Create an author",
-            description = "Creates a new author and returns the created resource. Requires ADMIN role.")
-    @ApiResponse(
-            responseCode = "201",
-            description = "Author created successfully")
+            description =
+                    "Creates a new author and returns the created resource."
+                            + "Requires ADMIN role.")
+    @ApiResponse(responseCode = "201", description = "Author created successfully")
     @ApiResponse(
             responseCode = "400",
             description = "Invalid request body – missing or malformed fields",
@@ -134,9 +137,7 @@ public class AuthorControllerV1 {
     @Operation(
             summary = "Delete an author by ID",
             description = "Deletes an author and all associated books. Requires ADMIN role.")
-    @ApiResponse(
-            responseCode = "204",
-            description = "Author deleted successfully")
+    @ApiResponse(responseCode = "204", description = "Author deleted successfully")
     @ApiResponse(
             responseCode = "403",
             description = "Insufficient permissions – ADMIN role required",
@@ -148,7 +149,8 @@ public class AuthorControllerV1 {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAuthor(
             @Parameter(description = "ID of the author to delete", example = "1", required = true)
-            @PathVariable(name = "id", required = true) final long id) {
+                    @PathVariable(name = "id", required = true)
+                    final long id) {
         facade.deleteAuthor(id);
         return ResponseEntity.noContent().build();
     }

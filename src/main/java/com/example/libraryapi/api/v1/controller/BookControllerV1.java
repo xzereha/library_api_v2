@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -37,6 +38,9 @@ public class BookControllerV1 {
     static final int VERSION = 1;
     private final BookFacadeV1 facade;
 
+    @Value("${library.api.secret}")
+    private String secret;
+
     /**
      * Constructor for the controller.
      *
@@ -44,6 +48,11 @@ public class BookControllerV1 {
      */
     public BookControllerV1(BookFacadeV1 facade) {
         this.facade = facade;
+    }
+
+    @GetMapping("/secret")
+    public String getSecret() {
+        return secret;
     }
 
     /**
@@ -57,24 +66,27 @@ public class BookControllerV1 {
      */
     @Operation(
             summary = "Get all books",
-            description = "Returns a paginated list of books, optionally filtered by ISBN, title"
-                    + " (case-insensitive partial), or author name (case-insensitive partial).")
+            description =
+                    "Returns a paginated list of books, optionally filtered by ISBN, title"
+                        + " (case-insensitive partial), or author name (case-insensitive partial).")
     @ApiResponse(
             responseCode = "200",
             description = "Paginated list of books retrieved successfully")
     @GetMapping(value = "/books", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PagedResponse<BookResponseV1>> getAll(
             @RequestParam(required = false)
-            @Parameter(description = "Exact ISBN match", example = "9780141037145")
-            String isbn,
+                    @Parameter(description = "Exact ISBN match", example = "9780141037145")
+                    String isbn,
             @RequestParam(required = false)
-            @Parameter(description = "Case-insensitive partial title match", example = "lord")
-            String title,
+                    @Parameter(
+                            description = "Case-insensitive partial title match",
+                            example = "lord")
+                    String title,
             @RequestParam(required = false)
-            @Parameter(
-                    description = "Case-insensitive partial author name match",
-                    example = "orwell")
-            String authorName,
+                    @Parameter(
+                            description = "Case-insensitive partial author name match",
+                            example = "orwell")
+                    String authorName,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getBooks(isbn, title, authorName, pageable));
     }
@@ -86,9 +98,7 @@ public class BookControllerV1 {
      * @return A ResponseEntity containing a Response object with the retrieved book.
      */
     @Operation(summary = "Get a book by ID", description = "Returns a single book by its ID.")
-    @ApiResponse(
-            responseCode = "200",
-            description = "The book was found and returned successfully")
+    @ApiResponse(responseCode = "200", description = "The book was found and returned successfully")
     @ApiResponse(
             responseCode = "404",
             description = "No book with the given ID exists",
@@ -96,7 +106,8 @@ public class BookControllerV1 {
     @GetMapping(value = "/books/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response<BookResponseV1>> getBookById(
             @Parameter(description = "ID of the book to retrieve", example = "1", required = true)
-            @PathVariable(name = "id", required = true) final long id) {
+                    @PathVariable(name = "id", required = true)
+                    final long id) {
         return ResponseEntity.ok(new Response<>(facade.getBook(id), VERSION));
     }
 
@@ -108,10 +119,9 @@ public class BookControllerV1 {
      */
     @Operation(
             summary = "Create a book",
-            description = "Creates a new book and returns the created resource. Requires ADMIN role.")
-    @ApiResponse(
-            responseCode = "201",
-            description = "Book created successfully")
+            description =
+                    "Creates a new book and returns the created resource. Requires ADMIN role.")
+    @ApiResponse(responseCode = "201", description = "Book created successfully")
     @ApiResponse(
             responseCode = "400",
             description = "Invalid request body – missing or malformed fields",
@@ -155,7 +165,8 @@ public class BookControllerV1 {
     @GetMapping(value = "/authors/{authorId}/books", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PagedResponse<BookResponseV1>> getBooksByAuthor(
             @Parameter(description = "ID of the author", example = "1", required = true)
-            @PathVariable(name = "authorId", required = true) final long authorId,
+                    @PathVariable(name = "authorId", required = true)
+                    final long authorId,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getBooksByAuthorId(authorId, pageable));
     }
@@ -169,9 +180,7 @@ public class BookControllerV1 {
     @Operation(
             summary = "Delete a book by ID",
             description = "Deletes a single book by its ID. Requires ADMIN role.")
-    @ApiResponse(
-            responseCode = "204",
-            description = "Book deleted successfully")
+    @ApiResponse(responseCode = "204", description = "Book deleted successfully")
     @ApiResponse(
             responseCode = "403",
             description = "Insufficient permissions – ADMIN role required",
@@ -183,7 +192,8 @@ public class BookControllerV1 {
     @DeleteMapping("/books/{id}")
     public ResponseEntity<Void> deleteBook(
             @Parameter(description = "ID of the book to delete", example = "1", required = true)
-            @PathVariable(name = "id", required = true) final long id) {
+                    @PathVariable(name = "id", required = true)
+                    final long id) {
         facade.deleteBook(id);
         return ResponseEntity.noContent().build();
     }

@@ -18,6 +18,11 @@ repositories {
 	mavenCentral()
 }
 
+ext {
+  set('springCloudVersion', "2025.1.1")
+  set('springWebVersion', "3.0.2")
+}
+
 checkstyle {
     toolVersion = "13.3.0"
     configFile = file("config/checkstyle/google_checks.xml")
@@ -29,7 +34,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springWebVersion}"
+    implementation "org.springframework.cloud:spring-cloud-starter-vault-config"
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'com.h2database:h2'
@@ -42,6 +48,12 @@ dependencies {
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+dependencyManagement {
+  imports {
+    mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+  }
 }
 
 tasks.named('test') {

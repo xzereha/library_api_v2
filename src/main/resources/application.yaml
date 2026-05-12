@@ -1,6 +1,14 @@
 spring:
     application:
         name: Library Api
+    config:
+        import: vault://
+    cloud:
+        vault:
+            uri: http://127.0.0.1:8200
+            token: ${VAULT_TOKEN}
+            kv:
+                enabled: true
     datasource:
         url: jdbc:h2:mem:testdb
         driverClassName: org.h2.Driver
