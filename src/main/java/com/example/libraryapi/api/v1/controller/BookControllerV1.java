@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import jakarta.validation.Valid;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -61,7 +62,7 @@ public class BookControllerV1 {
     @ApiResponse(
             responseCode = "200",
             description = "Paginated list of books retrieved successfully")
-    @GetMapping("/books")
+    @GetMapping(value = "/books", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PagedResponse<BookResponseV1>> getAll(
             @RequestParam(required = false)
             @Parameter(description = "Exact ISBN match", example = "9780141037145")
@@ -74,7 +75,7 @@ public class BookControllerV1 {
                     description = "Case-insensitive partial author name match",
                     example = "orwell")
             String authorName,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getBooks(isbn, title, authorName, pageable));
     }
 
@@ -92,7 +93,7 @@ public class BookControllerV1 {
             responseCode = "404",
             description = "No book with the given ID exists",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-    @GetMapping("/books/{id}")
+    @GetMapping(value = "/books/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response<BookResponseV1>> getBookById(
             @Parameter(description = "ID of the book to retrieve", example = "1", required = true)
             @PathVariable(name = "id", required = true) final long id) {
@@ -151,11 +152,11 @@ public class BookControllerV1 {
             responseCode = "404",
             description = "No author with the given ID exists",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-    @GetMapping("/authors/{authorId}/books")
+    @GetMapping(value = "/authors/{authorId}/books", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PagedResponse<BookResponseV1>> getBooksByAuthor(
             @Parameter(description = "ID of the author", example = "1", required = true)
             @PathVariable(name = "authorId", required = true) final long authorId,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getBooksByAuthorId(authorId, pageable));
     }
 

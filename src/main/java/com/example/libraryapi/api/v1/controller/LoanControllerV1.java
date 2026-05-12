@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 import jakarta.validation.Valid;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -96,7 +97,7 @@ public class LoanControllerV1 {
             responseCode = "404",
             description = "No loan with the given ID exists",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-    @PatchMapping("/loans/{id}/return")
+    @PatchMapping(value = "/loans/{id}/return", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response<LoanResponseV1>> returnBook(
             @Parameter(description = "ID of the loan to return", example = "1", required = true)
             @PathVariable(name = "id", required = true) final long id) {
@@ -119,7 +120,7 @@ public class LoanControllerV1 {
             responseCode = "404",
             description = "No loan with the given ID exists",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
-    @GetMapping("/loans/{id}")
+    @GetMapping(value = "/loans/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Response<LoanResponseV1>> getLoanById(
             @Parameter(description = "ID of the loan to retrieve", example = "1", required = true)
             @PathVariable(name = "id", required = true) final long id) {
@@ -138,8 +139,9 @@ public class LoanControllerV1 {
     @ApiResponse(
             responseCode = "200",
             description = "Paginated list of loans retrieved successfully")
-    @GetMapping("/loans")
-    public ResponseEntity<PagedResponse<LoanResponseV1>> getAll(Pageable pageable) {
+    @GetMapping(value = "/loans", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PagedResponse<LoanResponseV1>> getAll(
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getLoans(pageable));
     }
 }

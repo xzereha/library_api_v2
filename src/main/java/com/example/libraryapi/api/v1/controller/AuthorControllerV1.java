@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -65,7 +66,7 @@ public class AuthorControllerV1 {
             @RequestParam(name = "isni", required = false)
             @Parameter(description = "Filter by ISNI (exact match)", example = "0000000121351230")
             final String isni,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(facade.getAuthors(isni, pageable));
     }
 
