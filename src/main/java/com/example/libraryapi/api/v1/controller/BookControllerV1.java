@@ -38,7 +38,7 @@ public class BookControllerV1 {
     static final int VERSION = 1;
     private final BookFacadeV1 facade;
 
-    @Value("${library.api.secret}")
+    @Value("${library.api.secret:#{null}}")
     private String secret;
 
     /**

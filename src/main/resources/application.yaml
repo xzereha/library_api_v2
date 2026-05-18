@@ -2,7 +2,7 @@ spring:
     application:
         name: Library Api
     config:
-        import: vault://
+        import: optional:vault://
     cloud:
         vault:
             uri: http://127.0.0.1:8200
