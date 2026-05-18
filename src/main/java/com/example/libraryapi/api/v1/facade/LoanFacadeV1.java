@@ -8,6 +8,8 @@ import com.example.libraryapi.service.LoanService;
 
 import lombok.NonNull;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -34,6 +36,7 @@ public class LoanFacadeV1 {
      * @param request the request DTO containing the book ID
      * @return the response DTO containing the created loan
      */
+    @CacheEvict(value = "loans", allEntries = true)
     public LoanResponseV1 createLoan(@NonNull LoanRequestV1 request) {
         var username = currentUsername();
         var loan = loanService.createLoan(username, request.bookId());
@@ -48,6 +51,7 @@ public class LoanFacadeV1 {
      * @throws LoanNotFoundException if no loan with the given ID exists
      * @throws AccessDeniedException if the user is not the loan owner and is not an admin
      */
+    @CacheEvict(value = "loans", allEntries = true)
     public LoanResponseV1 returnBook(long id) {
         var loan = loanService
                 .getLoanById(id)
@@ -65,6 +69,7 @@ public class LoanFacadeV1 {
      * @throws LoanNotFoundException if no loan with the given ID exists
      * @throws AccessDeniedException if the user is not the loan owner and is not an admin
      */
+    @Cacheable(value = "loans", key = "#id")
     public LoanResponseV1 getLoan(Long id) {
         var loan = loanService
                 .getLoanById(id)
@@ -79,6 +84,7 @@ public class LoanFacadeV1 {
      * @param pageable pagination information
      * @return a paginated response of loans
      */
+    @Cacheable(value = "loans", key = "#pageable")
     public PagedResponse<LoanResponseV1> getLoans(Pageable pageable) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth.getAuthorities().stream()

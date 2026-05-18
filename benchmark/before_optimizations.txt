@@ -1,0 +1,35 @@
+Server Software:        
+Server Hostname:        localhost
+Server Port:            8080
+
+Document Path:          /api/v1/books
+Document Length:        75 bytes
+
+Concurrency Level:      1
+Time taken for tests:   400.408 seconds
+Complete requests:      1000000
+Failed requests:        0
+Total transferred:      439000000 bytes
+HTML transferred:       75000000 bytes
+Requests per second:    2497.45 [#/sec] (mean)
+Time per request:       0.400 [ms] (mean)
+Time per request:       0.400 [ms] (mean, across all concurrent requests)
+Transfer rate:          1070.69 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       3
+Processing:     0    0   0.2      0     129
+Waiting:        0    0   0.2      0     127
+Total:          0    0   0.2      0     129
+
+Percentage of the requests served within a certain time (ms)
+  50%      0
+  66%      0
+  75%      0
+  80%      0
+  90%      0
+  95%      1
+  98%      1
+  99%      1
+ 100%    129 (longest request)

@@ -10,6 +10,8 @@ import jakarta.annotation.Nullable;
 
 import lombok.NonNull;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +44,7 @@ public class AuthorFacadeV1 {
      * @param pageable pagination information
      * @return a paginated response of authors
      */
+    @Cacheable(value = "authors", key = "#isni ?: 'all' + '-' + #pageable")
     public PagedResponse<AuthorResponseV1> getAuthors(@Nullable String isni, Pageable pageable) {
         if (isni != null) {
             var authorOpt = authorService.getAuthorByIsni(isni);
@@ -69,6 +72,7 @@ public class AuthorFacadeV1 {
      * @return The found author.
      * @throws AuthorNotFoundException if no author with the given ID exists
      */
+    @Cacheable(value = "authors", key = "#id")
     public AuthorResponseV1 getAuthor(Long id) {
         return authorService
                 .getAuthorById(id)
@@ -82,6 +86,7 @@ public class AuthorFacadeV1 {
      * @param request the request DTO containing the data for creating the author
      * @return the response DTO containing the created author
      */
+    @CacheEvict(value = "authors", allEntries = true)
     public AuthorResponseV1 createAuthor(@NonNull AuthorRequestV1 request) {
         var author =
                 authorService.createAuthor(request.name(), Optional.ofNullable(request.isni()));
@@ -95,6 +100,7 @@ public class AuthorFacadeV1 {
      * @param id the ID of the author to delete
      * @throws AuthorNotFoundException if no author with the given ID exists
      */
+    @CacheEvict(value = "authors", allEntries = true)
     public void deleteAuthor(long id) {
         authorService.getAuthorById(id).orElseThrow(() -> new AuthorNotFoundException(id));
         authorService.deleteAuthor(id);

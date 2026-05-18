@@ -12,6 +12,8 @@ import jakarta.annotation.Nullable;
 
 import lombok.NonNull;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +54,7 @@ public class BookFacadeV1 {
      * @param pageable pagination information
      * @return a paginated response of books
      */
+    @Cacheable(value = "books", key = "#isbn ?: '' + '-' + #title ?: '' + '-' + #authorName ?: '' + '-' + #pageable")
     public PagedResponse<BookResponseV1> getBooks(
             @Nullable String isbn,
             @Nullable String title,
@@ -78,6 +81,7 @@ public class BookFacadeV1 {
      * @return The found book.
      * @throws BookNotFoundException if no book with the given ID exists
      */
+    @Cacheable(value = "books", key = "#id")
     public BookResponseV1 getBook(Long id) {
         return bookService
                 .getBookById(id)
@@ -91,6 +95,7 @@ public class BookFacadeV1 {
      * @param request the request DTO containing the data for creating the book
      * @return the response DTO containing the created book
      */
+    @CacheEvict(value = "books", allEntries = true)
     public BookResponseV1 createBook(@NonNull BookRequestV1 request) {
         var book =
                 bookService.createBook(
@@ -105,6 +110,7 @@ public class BookFacadeV1 {
      * @param pageable pagination information
      * @return a paginated response of books by the author
      */
+    @Cacheable(value = "books", key = "'author-' + #authorId + '-' + #pageable")
     public PagedResponse<BookResponseV1> getBooksByAuthorId(long authorId, Pageable pageable) {
         var page = bookService.getBooksByAuthorId(authorId, pageable);
         var books = page.getContent().stream().map(this::toResponse).toList();
@@ -123,6 +129,7 @@ public class BookFacadeV1 {
      * @param id the ID of the book to delete
      * @throws BookNotFoundException if no book with the given ID exists
      */
+    @CacheEvict(value = "books", allEntries = true)
     public void deleteBook(long id) {
         bookService
                 .getBookById(id)
