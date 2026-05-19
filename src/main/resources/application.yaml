@@ -1,6 +1,6 @@
 spring:
     application:
-        name: Library Api
+        name: library_api
     config:
         import: optional:vault://
     cloud:

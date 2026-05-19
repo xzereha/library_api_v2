@@ -7,6 +7,21 @@
 
 - Java 21
 
+### Vault
+
+Configure Vault with the following commands to create a dummy secret for the application:
+
+```bash
+vault server -dev -dev-root-token-id="root"
+vault kv put secret/library_api secret="your_secret_value"
+```
+
+Set the `VAULT_TOKEN` environment variable to the root token to allow the application to access Vault:
+
+```bash
+export VAULT_TOKEN="root"
+```
+
 ## Build
 
 ```bash
