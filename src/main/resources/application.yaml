@@ -36,6 +36,21 @@ spring:
         init:
             mode: always
 
+library:
+    rate-limit:
+        default-capacity: 100
+        default-refill-per-minute: 60
+        endpoints:
+            books:
+                capacity: 50
+                refill-per-minute: 30
+            authors:
+                capacity: 40
+                refill-per-minute: 20
+            loans:
+                capacity: 30
+                refill-per-minute: 10
+
 springdoc:
     api-docs:
         path: /api-docs
