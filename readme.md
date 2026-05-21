@@ -92,6 +92,21 @@ Without Redis:
 ./gradlew test
 ```
 
+## Benchmarks
+
+Benchmarks were run with [ab](https://httpd.apache.org/docs/2.4/programs/ab.html) against `GET /api/v1/books` (1000 books, 100 concurrent clients, 1M requests total).
+
+| Metric | No Cache | Redis Cache | Spring Cache | Redis vs No Cache | Spring vs No Cache |
+|---|---|---|---|---|---|
+| Requests/sec | 12,481.33 | 44,340.37 | 50,320.19 | **+255%** | **+303%** |
+| Mean latency | 8.012 ms | 2.255 ms | 1.987 ms | **−71.9%** | **−75.2%** |
+| P50 latency | 8 ms | 2 ms | 2 ms | −75% | −75% |
+| P99 latency | 16 ms | 4 ms | 3 ms | −75% | −81.3% |
+
+Both caching strategies offer massive improvements over no cache. The in-memory Spring cache (ConcurrentHashMap) has a slight edge over Redis due to the absence of network round-trips — expect ~13-18% more throughput with Spring cache vs Redis cache.
+
+Raw results are in the [`benchmark/`](benchmark/) directory.
+
 ## API Docs
 
 Once running, visit:
