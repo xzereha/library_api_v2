@@ -1,11 +1,19 @@
 spring:
     application:
         name: library_api
+    data:
+        redis:
+            host: ${SPRING_REDIS_HOST:localhost}
+            port: ${SPRING_REDIS_PORT:6379}
+            timeout: 2000ms
+            connect-timeout: 2000ms
+            repositories:
+                enabled: false
     config:
         import: optional:vault://
     cloud:
         vault:
-            uri: http://127.0.0.1:8200
+            uri: ${VAULT_ADDR:http://127.0.0.1:8200}
             token: ${VAULT_TOKEN}
             kv:
                 enabled: true
@@ -22,7 +30,7 @@ spring:
         database-platform: org.hibernate.dialect.H2Dialect
         hibernate:
             ddl-auto: create
-        show-sql: true
+        show-sql: false
         defer-datasource-initialization: true
     sql:
         init:
