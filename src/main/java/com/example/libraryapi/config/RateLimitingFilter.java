@@ -4,8 +4,6 @@ import com.example.libraryapi.config.RateLimitProperties.EndpointConfig;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.Refill;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -118,9 +116,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static Bucket newBucket(EndpointConfig config) {
         return Bucket.builder()
                 .addLimit(
-                        Bandwidth.classic(
-                                config.getCapacity(),
-                                Refill.greedy(config.getRefillPerMinute(), Duration.ofMinutes(1))))
+                        Bandwidth.builder()
+                                .capacity(config.getCapacity())
+                                .refillGreedy(config.getRefillPerMinute(), Duration.ofMinutes(1))
+                                .build())
                 .build();
     }
 }
