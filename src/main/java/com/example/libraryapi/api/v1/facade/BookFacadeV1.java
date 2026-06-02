@@ -1,7 +1,6 @@
 package com.example.libraryapi.api.v1.facade;
 
 import com.example.libraryapi.api.PagedResponse;
-import com.example.libraryapi.api.Response;
 import com.example.libraryapi.api.v1.dto.BookRequestV1;
 import com.example.libraryapi.api.v1.dto.BookResponseV1;
 import com.example.libraryapi.exception.BookNotFoundException;
@@ -54,16 +53,19 @@ public class BookFacadeV1 {
      * @param pageable pagination information
      * @return a paginated response of books
      */
-    @Cacheable(value = "books", key = "#isbn ?: '' + '-' + #title ?: '' + '-' + #authorName ?: '' + '-' + #pageable")
+    @Cacheable(
+            value = "books",
+            key = "#isbn ?: '' + '-' + #title ?: '' + '-' + #authorName ?: '' + '-' + #pageable")
     public PagedResponse<BookResponseV1> getBooks(
             @Nullable String isbn,
             @Nullable String title,
             @Nullable String authorName,
             Pageable pageable) {
         boolean hasFilters = isbn != null || title != null || authorName != null;
-        var page = hasFilters
-                ? bookService.searchBooks(isbn, title, authorName, pageable)
-                : bookService.getAll(pageable);
+        var page =
+                hasFilters
+                        ? bookService.searchBooks(isbn, title, authorName, pageable)
+                        : bookService.getAll(pageable);
         var books = page.getContent().stream().map(this::toResponse).toList();
         return new PagedResponse<>(
                 books,
@@ -131,9 +133,7 @@ public class BookFacadeV1 {
      */
     @CacheEvict(value = "books", allEntries = true)
     public void deleteBook(long id) {
-        bookService
-                .getBookById(id)
-                .orElseThrow(() -> new BookNotFoundException(id));
+        bookService.getBookById(id).orElseThrow(() -> new BookNotFoundException(id));
         bookService.deleteBook(id);
     }
 }

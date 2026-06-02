@@ -11,7 +11,7 @@ import lombok.NonNull;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -49,14 +49,13 @@ public class LoanFacadeV1 {
      * @param id the ID of the loan to return
      * @return the response DTO containing the updated loan
      * @throws LoanNotFoundException if no loan with the given ID exists
-     * @throws AccessDeniedException if the user is not the loan owner and is not an admin
      */
+    @PreAuthorize("@loanSecurity.isOwner(#id, authentication.name) or hasRole('ADMIN')")
     @CacheEvict(value = "loans", allEntries = true)
     public LoanResponseV1 returnBook(long id) {
         var loan = loanService
                 .getLoanById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
-        requireSelfOrAdmin(loan.getUsername());
         var updatedLoan = loanService.returnBook(id);
         return LoanResponseV1.fromLoan(updatedLoan);
     }
@@ -67,14 +66,13 @@ public class LoanFacadeV1 {
      * @param id Id to retrieve
      * @return The found loan.
      * @throws LoanNotFoundException if no loan with the given ID exists
-     * @throws AccessDeniedException if the user is not the loan owner and is not an admin
      */
+    @PreAuthorize("@loanSecurity.isOwner(#id, authentication.name) or hasRole('ADMIN')")
     @Cacheable(value = "loans", key = "#id")
     public LoanResponseV1 getLoan(Long id) {
         var loan = loanService
                 .getLoanById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
-        requireSelfOrAdmin(loan.getUsername());
         return LoanResponseV1.fromLoan(loan);
     }
 
@@ -104,18 +102,5 @@ public class LoanFacadeV1 {
 
     private static String currentUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
-    }
-
-    private static void requireSelfOrAdmin(String targetUsername) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth.getName().equals(targetUsername)) {
-            return;
-        }
-        if (auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
-            return;
-        }
-        throw new AccessDeniedException(
-                "Access denied: you are not '" + targetUsername + "' and do not have ADMIN role");
     }
 }

@@ -1,5 +1,5 @@
-INSERT INTO library_user (username, password, role) VALUES ('admin', '{noop}admin123', 'ADMIN');
-INSERT INTO library_user (username, password, role) VALUES ('user', '{noop}user123', 'USER');
+INSERT INTO library_user (username, password, role) VALUES ('admin', '$2a$10$CvGgVuJ/Nu7DC8We55wsHOnHFFg8Ir.FyudEs9lZ3vLtC2qMJoksG', 'ADMIN');
+INSERT INTO library_user (username, password, role) VALUES ('user', '$2a$10$mxIxv.BR1yPlbrbz59rGYuQ.Z9qeCRVwiuFftxr8EWMASA8Xnm.O.', 'USER');
 
 INSERT INTO author (name, isni) VALUES ('George Orwell', '1043321819600133');
 INSERT INTO author (name, isni) VALUES ('Jane Austen', '8908386379402654');

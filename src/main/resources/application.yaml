@@ -9,6 +9,9 @@ spring:
             connect-timeout: 2000ms
             repositories:
                 enabled: false
+        web:
+            pageable:
+                max-page-size: 100
     config:
         import: optional:vault://
     cloud:
@@ -35,6 +38,10 @@ spring:
     sql:
         init:
             mode: always
+
+server:
+    error:
+        include-stacktrace: never
 
 library:
     rate-limit:
